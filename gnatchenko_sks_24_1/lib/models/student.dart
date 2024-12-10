@@ -1,30 +1,45 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+
+enum Gender { male, female }
+
+
+const Map<Gender, Color> genderColors = {
+  Gender.female: Colors.pink,
+  Gender.male: Colors.blue
+};
+
+class Student {
+  Student({
+    String? id,
+    required this.firstName,
+    required this.lastName,
+    required this.departmentId,
+    required this.grade,
+    required this.gender
+    }) : id = id ?? const Uuid().v4();
   
-  enum Department {finance, law, it, medical}
-   const departmentIcons = {
-    Department.finance: Icons.money,
-    Department.law: Icons.house,
-    Department.it: Icons.laptop,
-    Department.medical: Icons.medication
-  };
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String departmentId;
+  final int grade;
+  final Gender gender;
 
-  enum Gender {male, female}
-  const genderColors = {
-    Gender.female: Colors.pink,
-    Gender.male: Colors.blue
-  };
-
-  class Student {
-    Student({
-      required this.firstName,
-      required this.lastName,
-      required this.department,
-      required this.grade,
-      required this.gender
-    });
-    final String firstName;
-    final String lastName;
-    final Department department;
-    final int grade;
-    final Gender gender;
+  Student copyWith({
+    String? firstName,
+    String? lastName,
+    String? departmentId,
+    Gender? gender,
+    int? grade,
+  }) {
+    return Student(
+      id: id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      departmentId: departmentId ?? this.departmentId,
+      gender: gender ?? this.gender,
+      grade: grade ?? this.grade,
+    );
   }
+}

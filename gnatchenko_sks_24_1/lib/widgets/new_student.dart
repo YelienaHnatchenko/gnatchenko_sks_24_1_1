@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gnatchenko_sks_24_1/models/department.dart';
 import 'package:gnatchenko_sks_24_1/models/student.dart';
+import 'package:gnatchenko_sks_24_1/providers/departments_provider.dart';
 
-class NewStudent extends StatefulWidget {
+class NewStudent extends ConsumerStatefulWidget {
   const NewStudent({
     super.key,
     required this.onAddStudent,
@@ -10,14 +13,15 @@ class NewStudent extends StatefulWidget {
 
   final void Function(Student student) onAddStudent;
   final Student? existingStudent;
-
+  
+  static get ref => null;
   @override
-  State<StatefulWidget> createState() {
+  ConsumerState<NewStudent> createState() {
     return _NewStudentState();
   }
 }
 
-class _NewStudentState extends State<NewStudent> {
+class _NewStudentState extends ConsumerState<NewStudent> {
   late final _firstnameController =
       TextEditingController(text: widget.existingStudent?.firstName ?? '');
   late final _lastnameController =
@@ -26,8 +30,9 @@ class _NewStudentState extends State<NewStudent> {
       text: widget.existingStudent != null
           ? widget.existingStudent!.grade.toString()
           : '');
-  late Department _selectedDepartment =
-      widget.existingStudent?.department ?? Department.finance;
+  Department _selectedDepartment = const Department(
+          id: 'd1', name: 'Finance', color: Colors.deepOrange, icon: Icons.money);
+
   late Gender _selectedGender = widget.existingStudent?.gender ?? Gender.female;
 
   @override
@@ -69,7 +74,7 @@ class _NewStudentState extends State<NewStudent> {
       Student(
           firstName: _firstnameController.text,
           lastName: _lastnameController.text,
-          department: _selectedDepartment,
+          departmentId: _selectedDepartment.id,
           grade: enteredAmount,
           gender: _selectedGender),
     );
@@ -78,6 +83,7 @@ class _NewStudentState extends State<NewStudent> {
 
   @override
   Widget build(BuildContext context) {
+    final availableDepartments = ref.watch(departmentsProvider);
     return Padding(
       padding: const EdgeInsets.fromLTRB(25, 35, 25, 25),
       child: Column(
@@ -86,16 +92,28 @@ class _NewStudentState extends State<NewStudent> {
             controller: _firstnameController,
             maxLength: 50,
             decoration: const InputDecoration(label: Text('first name')),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(color: Theme.of(context).colorScheme.primary),
           ),
           TextField(
             controller: _lastnameController,
             maxLength: 50,
             decoration: const InputDecoration(label: Text('last name')),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(color: Theme.of(context).colorScheme.primary),
           ),
           TextField(
             controller: _gradeController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(label: Text('grade')),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(color: Theme.of(context).colorScheme.primary),
           ),
           Padding(
             padding: const EdgeInsets.all(15),
@@ -103,23 +121,41 @@ class _NewStudentState extends State<NewStudent> {
               children: [
                 DropdownButton(
                     value: _selectedDepartment,
-                    items: Department.values
+                    items: availableDepartments
+                        .asMap() // Convert list to map with indexes
                         .map(
-                          (department) => DropdownMenuItem(
-                            value: department,
-                            child: Text(
-                              department.name.toUpperCase(),
-                            ),
-                          ),
+                          (index, department) {
+                            return MapEntry(
+                              index,
+                              DropdownMenuItem<Department>(
+                                value: department,
+                                child: Row(
+                                  children: [
+                                    Icon(department.icon),
+                                    const SizedBox(width: 8), 
+                                    Text(department.name,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         )
+                        .values
                         .toList(),
-                    onChanged: (value) {
-                      if (value == null) {
-                        return;
+                    onChanged: (Department? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedDepartment =
+                              newValue; // Update the selected department and rebuild
+                        });
                       }
-                      setState(() {
-                        _selectedDepartment = value;
-                      });
                     }),
                 const Spacer(),
                 DropdownButton(
@@ -130,6 +166,13 @@ class _NewStudentState extends State<NewStudent> {
                             value: gender,
                             child: Text(
                               gender.name.toUpperCase(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary),
                             ),
                           ),
                         )
